@@ -8,10 +8,10 @@ class Zekr extends StatelessWidget {
 
   Zekr({Key key, @required this.title}) : super(key: key);
 
-  bool canEdit;
+  bool get canEdit => title == "أذكار مخصصه";
+
   @override
   Widget build(BuildContext context) {
-    canEdit = title == "أذكار مخصصه";
     Size size = MediaQuery.of(context).size;
     var controller = SwiperController();
     return Scaffold(
@@ -100,7 +100,8 @@ class Zekr extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               SingleChildScrollView(
-                  child: Text(List.generate(3, (g)=>"$g \n").toList().join(), style: TextStyle(color: Colors.white))),
+                  child: Text(List.generate(3, (g) => "$g \n").toList().join(),
+                      style: TextStyle(color: Colors.white))),
               Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
