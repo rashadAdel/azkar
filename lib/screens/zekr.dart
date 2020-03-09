@@ -9,86 +9,155 @@ class Zekr extends StatelessWidget {
   Zekr({Key key, @required this.title}) : super(key: key);
 
   bool get canEdit => title == "أذكار مخصصه";
-
+  Size size;
+  SwiperController controller;
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    var controller = SwiperController();
+    size = MediaQuery.of(context).size;
+    controller = SwiperController();
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: SizedBox(
-        height: size.height / 4,
-        width: size.height / 4,
-        child: FloatingActionButton(
-          heroTag: title,
-          onPressed: () {
-            controller.next();
-          },
-          child: Container(
-              height: 500, width: 500, child: Center(child: Text("1000"))),
-        ),
-      ),
-      appBar: AppBar(
-        title: Text(this.title),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.home),
-          onPressed: () {
-            Router.navigator.pop();
-          },
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      floatingActionButton: btn(),
+      appBar: appBar(),
       body: Stack(
         children: <Widget>[
           backGround,
-          Swiper(
-            controller: controller,
-            itemCount: 10,
-            loop: false,
-            scrollDirection: Axis.vertical,
-            layout: SwiperLayout.STACK,
-            duration: 100,
-            itemWidth: size.width * .9,
-            pagination: SwiperPagination(),
-            itemHeight: size.height / 2.5,
-            itemBuilder: (BuildContext context, int index) => card(index),
-          ),
-          Positioned(
-            bottom: 15,
-            left: 16,
-            child: FloatingActionButton(
-              heroTag: "$title 3",
-              child: Icon(Icons.restore),
-              onPressed: () {},
-            ),
-          ),
-          canEdit
-              ? Positioned(
-                  bottom: 15,
-                  right: 16,
-                  child: FloatingActionButton(
-                    heroTag: "$title 2",
-                    child: Icon(Icons.add),
-                    onPressed: () {},
-                  ),
-                )
-              : Container(),
+          swiper(),
+          restBtn(),
+          canEdit ? addBtn(context) : Container(),
         ],
       ),
     );
   }
 
-  Card card(int index) {
+  TweenAnimationBuilder<Offset> swiper() {
+    return TweenAnimationBuilder<Offset>(
+        duration: Duration(seconds: 1),
+        tween: Tween<Offset>(begin: Offset(0, -size.height), end: Offset.zero),
+        builder: (BuildContext context, Offset value, Widget child) =>
+            Transform.translate(
+              offset: value,
+              child: Swiper(
+                controller: controller,
+                itemCount: 10,
+                loop: false,
+                curve: Curves.fastOutSlowIn,
+                scrollDirection: Axis.vertical,
+                layout: SwiperLayout.STACK,
+                duration: 500,
+                itemWidth: size.width * .9,
+                pagination: SwiperPagination(),
+                itemHeight: size.height / 2.5,
+                itemBuilder: (BuildContext context, int index) =>
+                    card(index, context),
+              ),
+            ));
+  }
+
+  TweenAnimationBuilder<double> addBtn(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween:Tween<double>(begin: -100,end:16),
+      builder: (BuildContext context, double value, Widget child) =>
+          Positioned(
+            bottom: 15,
+            right: value,
+            child: FloatingActionButton(
+              heroTag: "$title 2",
+              child: Icon(Icons.add),
+              onPressed: () {
+                // showDialog(
+                //     context: context,
+                //     barrierDismissible: false,
+                //     builder: (_) => AlertDialog(
+                //           actions: <Widget>[
+                //             FlatButton(
+                //               child: Text("ok"),
+                //               onPressed: () {
+                //                 Navigator.of(context).pop();
+                //               },
+                //             ),
+                //             FlatButton(
+                //               child: Text("no"),
+                //               onPressed: () {},
+                //             ),
+                //           ],
+                //         ));
+              },
+            ),
+          ),
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  TweenAnimationBuilder restBtn() {
+    return TweenAnimationBuilder<double>(
+      builder: (BuildContext context, double value, Widget child) => Positioned(
+        bottom: 15,
+        left: value,
+        child: FloatingActionButton(
+          heroTag: "$title 3",
+          child: Icon(Icons.restore),
+          onPressed: () {},
+        ),
+      ),
+      duration: const Duration(seconds: 1),
+      tween: Tween<double>(begin: -100, end: 16.0),
+    );
+  }
+
+  AppBar appBar() {
+    return AppBar(
+      title: Text(this.title),
+      centerTitle: true,
+      leading: IconButton(
+        icon: Icon(Icons.home),
+        onPressed: () {
+          Router.navigator.pop();
+        },
+      ),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+  TweenAnimationBuilder<Offset> btn() {
+    return TweenAnimationBuilder<Offset>(
+      duration: const Duration(seconds: 1),
+      tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
+      builder: (BuildContext context, Offset value, Widget child) {
+        return Transform.translate(
+          offset: value,
+          child: SizedBox(
+            height: size.height / 5,
+            width: size.height / 5,
+            child: FloatingActionButton(
+              splashColor: Colors.red,
+              heroTag: title,
+              onPressed: () {
+                controller.next();
+              },
+              child: Container(
+                  height: 500, width: 500, child: Center(child: Text("1000"))),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Card card(int index, BuildContext context) {
+    String txt =
+        List.generate(43, (g) => "${List.generate(20, (g) => "$g").join()} \n")
+            .toList()
+            .join(); //Todo: replace with real text
     return Card(
       clipBehavior: Clip.hardEdge,
       elevation: 7,
@@ -99,10 +168,32 @@ class Zekr extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              SingleChildScrollView(
-                  child: Text(List.generate(3, (g) => "$g \n").toList().join(),
-                      style: TextStyle(color: Colors.white))),
-              Spacer(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: InkWell(
+                    onTap: () {
+                      showDialog(
+                        barrierDismissible: true,
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          content: Container(
+                            constraints: BoxConstraints(
+                              maxHeight: size.height / 2,
+                            ),
+                            child: SingleChildScrollView(
+                              child: Center(child: Text(txt)),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      txt,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
