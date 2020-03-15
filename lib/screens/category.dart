@@ -1,4 +1,4 @@
-
+import 'package:azkar/blocs/thems/ThemeBloc.dart';
 import 'package:azkar/model/card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,32 +19,32 @@ class _CategoryState extends State<Category> {
     secondAnimation = false;
     cardsData = <CardData>[
       CardData(
-          title: "أذكار المساء",
+          title: CategoryNames.Evening,
           color: Color(0xffB63399),
           align: Alignment.topLeft,
           angle: .2),
       CardData(
-          title: "أذكار الصباح",
+          title: CategoryNames.Morning,
           color: Color(0xffFF7CE2),
           angle: .3,
           align: Alignment.topRight),
       CardData(
-          title: "أذكار الصلاة",
+          title: CategoryNames.Pray,
           color: Color(0xffF2C94C),
           angle: -.3,
           align: Alignment.centerLeft),
       CardData(
-          title: "أذكار المسلم",
+          title: CategoryNames.Muslim,
           color: Color(0xffEB5757),
           angle: 44.0,
           align: Alignment.centerRight),
       CardData(
-          title: "أذكار النوم",
+          title: CategoryNames.Sleep,
           color: Color(0xff27AE60),
           angle: -.5,
           align: Alignment.bottomLeft),
       CardData(
-          title: "أذكار مخصصه",
+          title: CategoryNames.Custom,
           color: Color(0xff56CCF2),
           angle: .25,
           align: Alignment.bottomRight),
@@ -80,15 +80,13 @@ class _CategoryState extends State<Category> {
               opacity: clicked == null || clicked == data.title ? 1 : 0,
               child: AnimatedAlign(
                 onEnd: () {
-                    if (clicked == data.title && secondAnimation) {
-                        Router.navigator.pushNamed(
-                          Router.zekr,
-                          arguments: ZekrArguments(title: data.title),
-                        );
-                        clicked=null;
-                      
-                      }
-                    
+                  if (clicked == data.title && secondAnimation) {
+                    Router.navigator.pushNamed(
+                      Router.zekr,
+                      arguments: ZekrArguments(title: data.title),
+                    );
+                    clicked = null;
+                  }
                 },
                 duration: Duration(milliseconds: 300),
                 alignment: clicked == null
@@ -106,7 +104,7 @@ class _CategoryState extends State<Category> {
                       color: data.color,
                       child: Center(
                         child: Text(
-                          data.title,
+                          "أذكار ${data.title}",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -122,10 +120,43 @@ class _CategoryState extends State<Category> {
           ),
         )
         .toList();
-    return SafeArea(
-      child: Scaffold(
-        body: Stack(children: <Widget>[backGround] + cards),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: SafeArea(
+        child: Scaffold(
+          body: Stack(children: <Widget>[backGround] + cards),
+        ),
       ),
     );
   }
+
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text(' الخروج'),
+            content: new Text('هل تريد الخروج بالفعل؟'),
+            actions: <Widget>[
+              new FlatButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: new Text('No'),
+              ),
+              new FlatButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: new Text('Yes'),
+              ),
+            ],
+          ),
+        )) ??
+        false;
+  }
+}
+
+class CategoryNames {
+  static const String Morning = "الصباح";
+  static const String Evening = "المساء";
+  static const String Muslim = "المسلم";
+  static const String Pray = "الصلاة";
+  static const String Sleep = "النوم";
+  static const String Custom = "مخصصة";
 }

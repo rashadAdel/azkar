@@ -1,12 +1,11 @@
 class ZekrModel {
-  final String title, about, category;
+  final String name, about;
   final int target, actually;
 
-  ZekrModel({
-    this.title,
-    this.about,
-    this.category,
-    this.target,
-    this.actually,
+  const ZekrModel({
+    this.name = "",
+    this.about = "",
+    this.target = 0,
+    this.actually = 0,
   });
 }

@@ -1,7 +1,7 @@
 import 'package:azkar/Routes/Router.gr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:bloc/bloc.dart';
+import 'blocs/thems/ThemeBloc.dart';
 
 void main() => runApp(MyApp());
 
@@ -36,16 +36,5 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-  }
-}
-
-class ThemeBloc extends Bloc<Color, Color> {
-  @override
-  Color get initialState => Colors.blue;
-  @override
-  Stream<Color> mapEventToState(
-    Color event,
-  ) async* {
-    yield event;
   }
 }
