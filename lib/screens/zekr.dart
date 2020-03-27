@@ -1,37 +1,40 @@
-import 'package:azkar/model/zekr.dart';
+import 'package:azkar/bloc/animation/animation_bloc.dart';
+import 'package:azkar/bloc/azkar/azkar_bloc.dart';
 import 'package:azkar/screens/category.dart';
-import 'package:azkar/screens/edit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import '../main.dart';
 import '../Routes/Router.gr.dart';
 
 class Zekr extends StatelessWidget {
-  final String title;
-
-  Zekr({Key key, @required this.title}) : super(key: key);
-
+  Zekr({Key key}) : super(key: key);
   final SwiperController controller = SwiperController();
 
   @override
   Widget build(BuildContext context) {
+    BlocProvider.of<AnimationBloc>(context).add(Clicked());
     final Size size = MediaQuery.of(context).size;
-    return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: btn(size),
-      appBar: appBar(),
-      body: Stack(
-        children: <Widget>[
-          backGround,
-          swiper(size),
-          restBtn(),
-          title == CategoryNames.Custom ? addBtn(context) : Container(),
-        ],
-      ),
+    return BlocBuilder<AzkarBloc, AzkarState>(
+      builder: (context, state) => Scaffold(
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: btn(context, size),
+          appBar: appBar(context),
+          body: Stack(
+            children: <Widget>[
+              backGround,
+              swiper(size, context),
+              restBtn(context),
+              state.currentZekr.category == CategoryNames.Custom
+                  ? addBtn(context)
+                  : Container(),
+            ],
+          )),
     );
   }
 
-  TweenAnimationBuilder<Offset> swiper(Size size) {
+  TweenAnimationBuilder<Offset> swiper(Size size, BuildContext context) {
     return TweenAnimationBuilder<Offset>(
       duration: Duration(seconds: 1),
       curve: Curves.elasticInOut,
@@ -42,16 +45,19 @@ class Zekr extends StatelessWidget {
         child: child,
       ),
       child: Swiper(
-        //Todo: onIndexChanged: bloc add ,
+        onIndexChanged: (index) {
+          BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
+        },
         controller: controller,
-        itemCount: 10,
+        itemCount: BlocProvider.of<AzkarBloc>(context).state.list.length,
         loop: false,
+        control: SwiperPagination(),
         curve: Curves.fastOutSlowIn,
         scrollDirection: Axis.vertical,
         layout: SwiperLayout.STACK,
         duration: 500,
         itemWidth: size.width * .9,
-        pagination: SwiperPagination(),
+        pagination: FractionPaginationBuilder(),
         itemHeight: size.height / 2.5,
         itemBuilder: (BuildContext context, int index) =>
             card(index, context, size),
@@ -65,23 +71,19 @@ class Zekr extends StatelessWidget {
       builder: (BuildContext context, double value, Widget child) =>
           Positioned(bottom: 15, right: value, child: child),
       child: FloatingActionButton(
-        heroTag: "$title 2",
+        heroTag:
+            "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 2",
         child: Icon(Icons.add),
         onPressed: () {
-          showDialog(
-            barrierDismissible: true,
-            context: context,
-            child: EditDialog(
-              zekrModel: ZekrModel(),
-            ),
-          );
+          BlocProvider.of<AzkarBloc>(context)
+              .add(AddOrUpdate(context: context));
         },
       ),
       duration: Duration(seconds: 1),
     );
   }
 
-  TweenAnimationBuilder restBtn() {
+  TweenAnimationBuilder restBtn(BuildContext context) {
     return TweenAnimationBuilder<double>(
       builder: (BuildContext context, double value, Widget child) => Positioned(
         bottom: 15,
@@ -91,37 +93,39 @@ class Zekr extends StatelessWidget {
       duration: const Duration(seconds: 1),
       tween: Tween<double>(begin: -100, end: 16.0),
       child: FloatingActionButton(
-        heroTag: "$title 3",
+        heroTag:
+            "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 3",
         child: Icon(Icons.restore),
-        onPressed: () {},
-      ),
-    );
-  }
-
-  AppBar appBar() {
-    return AppBar(
-      title: Text("أذكار ${this.title}"),
-      centerTitle: true,
-      leading: IconButton(
-        icon: Icon(Icons.home),
         onPressed: () {
-          Router.navigator.pop();
+          BlocProvider.of<AzkarBloc>(context).add(Reset());
         },
       ),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.settings),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: Icon(Icons.search),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
-  TweenAnimationBuilder<Offset> btn(Size size) {
+  AppBar appBar(BuildContext context) => AppBar(
+        title: Text(
+            "أذكار ${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category}"),
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.home),
+          onPressed: () {
+            Router.navigator.pop();
+          },
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings), //Todo:Settings screen
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(Icons.search), //Todo:search
+            onPressed: () {},
+          ),
+        ],
+      );
+
+  TweenAnimationBuilder<Offset> btn(BuildContext context, Size size) {
     return TweenAnimationBuilder<Offset>(
       duration: const Duration(seconds: 1),
       tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
@@ -130,17 +134,27 @@ class Zekr extends StatelessWidget {
         offset: value,
         child: child,
       ),
-      child: SizedBox(
-        width: size.height / 5,
-        height: size.height / 5,
-        child: FloatingActionButton(
-          splashColor: Colors.red,
-          heroTag: title,
-          onPressed: () {
-            controller.move(4); //Todo:next after target
-          },
-          child: Center(
-            child: Text("1000"),
+      child: BlocBuilder<AzkarBloc, AzkarState>(
+        builder: (context, state) => SizedBox(
+          width: size.height / 5,
+          height: size.height / 5,
+          child: FloatingActionButton(
+            splashColor: Colors.red,
+            heroTag:
+                BlocProvider.of<AzkarBloc>(context).state.currentZekr.category,
+            onPressed: () async {
+              BlocProvider.of<AzkarBloc>(context).add(Increment());
+              if (state.currentZekr.counter == 1 &&
+                  state.currentZekr.target != 0) {
+                BlocProvider.of<AzkarBloc>(context).add(Reset());
+                controller.next();
+              }
+            },
+            child: Center(
+              child: Text(
+                ("${state.currentZekr.counter}"),
+              ),
+            ),
           ),
         ),
       ),
@@ -148,108 +162,141 @@ class Zekr extends StatelessWidget {
   }
 
   Card card(int index, BuildContext context, Size size) {
-    String txt =
-        List.generate(43, (g) => "${List.generate(20, (g) => "$g").join()} \n")
-            .toList()
-            .join(); //Todo: replace with real text
     return Card(
       clipBehavior: Clip.hardEdge,
       elevation: 7,
-      child: Container(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: SingleChildScrollView(
-                  child: InkWell(
-                    onTap: () {
-                      showDialog(
-                        barrierDismissible: true,
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          content: Container(
-                            constraints: BoxConstraints(
-                              maxHeight: size.height / 2,
-                            ),
-                            child: SingleChildScrollView(
-                              child: Center(child: Text(txt)),
+      child: BlocBuilder<AzkarBloc, AzkarState>(
+          builder: (context, state) => Container(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            showDialog(
+                              barrierDismissible: true,
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                content: Container(
+                                  constraints: BoxConstraints(
+                                    maxHeight: size.height / 2,
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: Center(
+                                      child: Text(state.currentZekr.name),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                state.list[index].name,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      );
-                    },
-                    child: Text(
-                      txt,
-                      style: TextStyle(color: Colors.white),
-                    ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Expanded(
+                            child: FlatButton(
+                                child: Icon(Icons.share, color: Colors.white),
+                                onPressed: () {}), //Todo:share
+                          ),
+                          BlocProvider.of<AzkarBloc>(context)
+                                      .state
+                                      .currentZekr
+                                      .category ==
+                                  CategoryNames.Custom
+                              ? Expanded(
+                                  child: FlatButton(
+                                    child:
+                                        Icon(Icons.edit, color: Colors.white),
+                                    onPressed: () {
+                                      BlocProvider.of<AzkarBloc>(context).add(
+                                        AddOrUpdate(
+                                            zekr: state.currentZekr,
+                                            context: context),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Container(),
+                          BlocProvider.of<AzkarBloc>(context)
+                                      .state
+                                      .currentZekr
+                                      .category ==
+                                  CategoryNames.Custom
+                              ? Expanded(
+                                  child: FlatButton(
+                                    child:
+                                        Icon(Icons.delete, color: Colors.white),
+                                    onPressed: () async {
+                                      bool delete = await showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text("هل تريد الحذف؟"),
+                                          actions: <Widget>[
+                                            FlatButton(
+                                              onPressed: () =>
+                                                  Router.navigator.pop(true),
+                                              child: Text("نعم"),
+                                            ),
+                                            FlatButton(
+                                              onPressed: () =>
+                                                  Router.navigator.pop(false),
+                                              child: Text("لا"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (delete)
+                                        BlocProvider.of<AzkarBloc>(context)
+                                            .add(Delete());
+                                    },
+                                  ),
+                                )
+                              : Container(),
+                          Expanded(
+                            child: FlatButton(
+                                child: Icon(Icons.info, color: Colors.white),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    child: AlertDialog(
+                                      content: SingleChildScrollView(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Text(state.currentZekr.about),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Expanded(
-                    child: FlatButton(
-                        child: Icon(Icons.share, color: Colors.white),
-                        onPressed: () {}),
-                  ),
-                  title == CategoryNames.Custom
-                      ? Expanded(
-                          child: FlatButton(
-                              child: Icon(Icons.edit, color: Colors.white),
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    child: EditDialog(
-                                        //Todo:pass ZekrModel
-                                        ));
-                              }),
-                        )
-                      : Container(),
-                  title == CategoryNames.Custom
-                      ? Expanded(
-                          child: FlatButton(
-                              child: Icon(Icons.delete, color: Colors.white),
-                              onPressed: () async {
-                                bool delete = await showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    actions: <Widget>[
-                                      FlatButton(
-                                        onPressed: () =>
-                                            Router.navigator.pop(true),
-                                        child: Text("نعم"),
-                                      ),
-                                      FlatButton(
-                                        onPressed: () =>
-                                            Router.navigator.pop(false),
-                                        child: Text("لا"),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                //Todo: Confirm delete
-                              }),
-                        )
-                      : Container(),
-                  Expanded(
-                    child: FlatButton(
-                        child: Icon(Icons.info, color: Colors.white),
-                        onPressed: () {}),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        decoration: BoxDecoration(
-            color: index % 2 == 0
-                ? Colors.indigo
-                : index % 3 == 0 ? Colors.cyan : Colors.red),
-      ),
+                decoration: BoxDecoration(
+                    color: index % 2 == 0
+                        ? Colors.indigo
+                        : index % 3 == 0 ? Colors.cyan : Colors.red),
+              )),
     );
   }
 }

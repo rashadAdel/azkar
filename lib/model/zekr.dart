@@ -33,19 +33,8 @@ class ZekrModel {
     );
   }
 
-  _updateValues(final Map<String, dynamic> map) {
-    if (map['id'] != null) this.id = int.tryParse("${map['id']}");
-    if (map['name'] != null) this.name = map['name'];
-    if (map['target'] != null) this.target = int.tryParse("${map['target']}");
-    if (map['actually'] != null)
-      this.actually = int.tryParse("${map['actually']}");
-    if (map['about'] != null) this.about = map['about'];
-    if (map['category'] != null) this.category = map['category'];
-    return ZekrModel.fromMap(map);
-  }
-
   insert() async {
-    return _updateValues((await Db.instance.insert("Zekr", toMap)).first);
+    Db.instance.insert("Zekr", toMap);
   }
 
   Future<int> delete({String where}) async {
@@ -61,8 +50,9 @@ class ZekrModel {
     return result;
   }
 
-  Future<ZekrModel> update(ZekrModel data) async => _updateValues(
-      (await Db.instance.update("Zekr", data.toMap, _where)).first);
+  update(ZekrModel data) async {
+    await Db.instance.update("Zekr", data.toMap, _where);
+  }
 
   String get _where {
     List<String> where = [];
@@ -76,9 +66,14 @@ class ZekrModel {
     return where.join(" and ");
   }
 
-  int get counter => target == 0 ? actually : target - actually;
+  int get counter => target == 0 ? actually + 1 : target - actually;
 
-  Future<int> get increment async {
-    return (await update(ZekrModel(actually: actually + 1))).counter;
+  increment() async {
+    await Db.instance.update("Zekr",
+        ZekrModel(actually: actually + 1, target: target).toMap, _where);
+  }
+
+  reset() async {
+    await update(ZekrModel(actually: 0, target: target));
   }
 }
