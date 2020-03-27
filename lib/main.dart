@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
             ),
             debugShowCheckedModeBanner: false,
             title: 'Material App',
-            initialRoute: Router.loading,
+            initialRoute: Router.initial,
             onGenerateRoute: Router.onGenerateRoute,
             navigatorKey: Router.navigator.key,
           );

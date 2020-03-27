@@ -28,8 +28,8 @@ dependencies:
   equatable: ^1.1.0
   page_transition: ^1.1.5
   auto_route: ^0.3.0
-  
-  
+  sqflite:
+  path_provider:
 
 dev_dependencies:
   flutter_test:

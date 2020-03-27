@@ -4,6 +4,7 @@
 // AutoRouteGenerator
 // **************************************************************************
 
+import 'package:azkar/model/zekr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:auto_route/auto_route.dart';
@@ -13,14 +14,14 @@ import 'package:azkar/screens/category.dart';
 import 'package:page_transition/page_transition.dart';
 
 class Router {
-  static const loading = '/';
+  static const initial = '/';
   static const zekr = '/zekr';
   static const category = '/category';
   static final navigator = ExtendedNavigator();
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final args = settings.arguments;
     switch (settings.name) {
-      case Router.loading:
+      case Router.initial:
         if (hasInvalidArgs<Key>(args)) {
           return misTypedArgsRoute<Key>(args);
         }
@@ -35,7 +36,11 @@ class Router {
         }
         final typedArgs = args as ZekrArguments;
         return PageTransition(
-            child: Zekr(key: typedArgs.key, title: typedArgs.title),
+            child: Zekr(
+              key: typedArgs.key,
+              title: typedArgs.title,
+              data: typedArgs.data,
+            ),
             type: PageTransitionType.size,
             curve: Curves.elasticInOut,
             alignment: Alignment.center,
@@ -65,5 +70,6 @@ class Router {
 class ZekrArguments {
   final Key key;
   final String title;
-  ZekrArguments({this.key, @required this.title});
+  final List<ZekrModel> data;
+  ZekrArguments({this.key, this.data, @required this.title});
 }
