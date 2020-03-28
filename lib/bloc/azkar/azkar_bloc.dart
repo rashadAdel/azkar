@@ -28,8 +28,8 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
         ),
       );
       //That's if open Custom For First Time and it insert
-      if (event.context.widget.toString().contains("Animation") &&
-          zekr != null) {
+      if (zekr != null &&
+          event.context.widget.toString().contains("Animation")) {
         add(
           OpenCategory(
               context: event.context, categoryName: CategoryNames.Custom),
@@ -38,6 +38,7 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
     } else if (event is ChangePosition) {
       state.pos = event.pos;
     } else if (event is OpenCategory) {
+      //Fetsh Data
       List<ZekrModel> lst = await ZekrModel.fromDataBase(
           where: "`category`='${event.categoryName}'");
       yield AzkarState(list: lst, pos: 0);

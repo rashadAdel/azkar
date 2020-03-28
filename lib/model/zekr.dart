@@ -8,7 +8,7 @@ class ZekrModel {
     this.id,
     this.name,
     this.about,
-    this.target = 0,
+    this.target = 1,
     this.actually = 0,
     this.category,
   });

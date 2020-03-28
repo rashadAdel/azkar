@@ -38,7 +38,8 @@ class Router {
             child: Zekr(),
             key: typedArgs,
             type: PageTransitionType.size,
-            curve: Curves.elasticInOut,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.ease,
             alignment: Alignment.center,
             settings: settings);
       case Router.category:

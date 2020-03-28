@@ -138,11 +138,19 @@ class _CategoryState extends State<Category> {
   }
 
   Future<bool> _onWillPop() async {
-    return (await showDialog(
+    return await showDialog(
+          // Todo: better Look
           context: context,
           builder: (context) => new AlertDialog(
-            title: new Text(' الخروج'),
-            content: new Text('هل تريد الخروج بالفعل؟'),
+            backgroundColor: Colors.orange[100],
+            title: new Text(
+              ' الخروج',
+              textDirection: TextDirection.rtl,
+            ),
+            content: new Text(
+              'هل تريد الخروج بالفعل؟',
+              textDirection: TextDirection.rtl,
+            ),
             actions: <Widget>[
               new FlatButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -154,7 +162,7 @@ class _CategoryState extends State<Category> {
               ),
             ],
           ),
-        )) ??
+        ) ??
         false;
   }
 }

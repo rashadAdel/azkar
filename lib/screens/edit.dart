@@ -15,20 +15,44 @@ bool infinity;
 
 class _EditDialogState extends State<EditDialog> {
   ZekrModel get _getData => ZekrModel(
-        about: txtAbout.text,
-        name: txtZekr.text,
-        target: infinity ? 0 : int.tryParse("${txtTarget.text}"),
+        about: _txtAbout.text,
+        name: _txtZekr.text,
+        target: infinity ? 0 : int.tryParse(_txtTarget.text) ?? 1,
       );
+  TextEditingController _txtZekr;
+  TextEditingController _txtAbout;
+  TextEditingController _txtTarget;
+  FocusNode _targetFocus;
 
-  TextEditingController txtZekr = TextEditingController();
-  TextEditingController txtAbout = TextEditingController();
-  TextEditingController txtTarget = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _txtZekr = TextEditingController();
+    _txtAbout = TextEditingController();
+    _txtTarget = TextEditingController();
+    _targetFocus = FocusNode();
+    _targetFocus.addListener(() {
+      if (_targetFocus.hasFocus) {
+        _txtTarget.selection =
+            TextSelection(baseOffset: 0, extentOffset: _txtTarget.text.length);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _targetFocus.dispose();
+    _txtZekr.dispose();
+    _txtAbout.dispose();
+    _txtTarget.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    txtZekr.text = widget.zekrModel?.name;
-    txtAbout.text = widget.zekrModel?.about;
-    txtTarget.text = widget.zekrModel?.target?.toString();
+    _txtZekr.text = widget.zekrModel?.name;
+    _txtAbout.text = widget.zekrModel?.about;
+    _txtTarget.text = widget.zekrModel?.target?.toString();
     return AlertDialog(
       backgroundColor: Colors.orange[100],
       title: Text(widget.zekrModel == null ? "أضافة ذكر" : "تعديل ذكر",
@@ -41,18 +65,24 @@ class _EditDialogState extends State<EditDialog> {
             ),
             TextField(
               autofocus: true,
-              controller: txtZekr,
+              controller: _txtZekr,
               textDirection: TextDirection.rtl,
               maxLines: null,
               textAlign: TextAlign.right,
               decoration: InputDecoration(
-                labelText: "الذكر",
-                labelStyle: TextStyle(fontSize: 20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(
                     Radius.circular(20),
                   ),
                   gapPadding: 0,
+                ),
+                filled: true,
+                labelText: "الذكر",
+                labelStyle: TextStyle(
+                  fontSize: 20,
+                  color: Colors.grey.withOpacity(.7),
+                  decoration: TextDecoration.none,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -60,7 +90,7 @@ class _EditDialogState extends State<EditDialog> {
               height: 10,
             ),
             TextField(
-              controller: txtAbout,
+              controller: _txtAbout,
               textDirection: TextDirection.rtl,
               maxLines: null,
               textAlign: TextAlign.right,
@@ -88,7 +118,9 @@ class _EditDialogState extends State<EditDialog> {
                 Switch(
                   value: infinity,
                   onChanged: (val) {
-                    print(infinity);
+                    //Todo:txtTarget focus
+                    _txtTarget.text = "";
+                    if (!val) _targetFocus.requestFocus();
                     setState(
                       () {
                         infinity = val;
@@ -109,8 +141,9 @@ class _EditDialogState extends State<EditDialog> {
             ),
             infinity
                 ? Container()
-                : TextField(
-                    controller: txtTarget,
+                : TextFormField(
+                    focusNode: _targetFocus,
+                    controller: _txtTarget,
                     keyboardType: TextInputType.number,
                     textDirection: TextDirection.rtl,
                     textAlign: TextAlign.right,

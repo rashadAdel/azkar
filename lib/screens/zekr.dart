@@ -4,6 +4,8 @@ import 'package:azkar/screens/category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:share/share.dart';
+// import 'package:vibration/vibration.dart';
 import '../main.dart';
 import '../Routes/Router.gr.dart';
 
@@ -36,7 +38,7 @@ class Zekr extends StatelessWidget {
 
   TweenAnimationBuilder<Offset> swiper(Size size, BuildContext context) {
     return TweenAnimationBuilder<Offset>(
-      duration: Duration(seconds: 1),
+      duration: Duration(milliseconds: 600),
       curve: Curves.elasticInOut,
       tween: Tween<Offset>(begin: Offset(0, -size.height), end: Offset.zero),
       builder: (BuildContext context, Offset value, Widget child) =>
@@ -67,10 +69,11 @@ class Zekr extends StatelessWidget {
 
   TweenAnimationBuilder<double> addBtn(BuildContext context) {
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: -100, end: 16),
+      tween: Tween<double>(begin: -16, end: 16),
       builder: (BuildContext context, double value, Widget child) =>
           Positioned(bottom: 15, right: value, child: child),
       child: FloatingActionButton(
+        splashColor: Colors.red,
         heroTag:
             "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 2",
         child: Icon(Icons.add),
@@ -79,7 +82,7 @@ class Zekr extends StatelessWidget {
               .add(AddOrUpdate(context: context));
         },
       ),
-      duration: Duration(seconds: 1),
+      duration: Duration(milliseconds: 700),
     );
   }
 
@@ -90,15 +93,67 @@ class Zekr extends StatelessWidget {
         left: value,
         child: child,
       ),
-      duration: const Duration(seconds: 1),
-      tween: Tween<double>(begin: -100, end: 16.0),
+      duration: const Duration(milliseconds: 700),
+      tween: Tween<double>(begin: -16, end: 16.0),
       child: FloatingActionButton(
+        splashColor: Colors.red,
         heroTag:
             "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 3",
         child: Icon(Icons.restore),
         onPressed: () {
+          //Todo:Make sound
+          //Todo:Make Animation Round
           BlocProvider.of<AzkarBloc>(context).add(Reset());
         },
+      ),
+    );
+  }
+
+  TweenAnimationBuilder<Offset> btn(BuildContext context, Size size) {
+    return TweenAnimationBuilder<Offset>(
+      duration: const Duration(milliseconds: 700),
+      tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
+      builder: (BuildContext context, Offset value, Widget child) =>
+          Transform.translate(
+        offset: value,
+        child: child,
+      ),
+      child: BlocBuilder<AzkarBloc, AzkarState>(
+        builder: (context, state) => SizedBox(
+          width: size.height / 5,
+          height: size.height / 5,
+          child: FloatingActionButton(
+            backgroundColor: Colors.white,
+            splashColor: Colors.red,
+            heroTag:
+                BlocProvider.of<AzkarBloc>(context).state.currentZekr.category,
+            onPressed: () async {
+              BlocProvider.of<AzkarBloc>(context).add(Increment());
+              if (state.currentZekr.counter < 2 &&
+                  state.currentZekr.target != 0) {
+                BlocProvider.of<AzkarBloc>(context).add(Reset());
+                controller.next();
+                // Vibration.vibrate(duration: 500);
+                //Todo: make vibration
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    ("${state.currentZekr.counter}"),
+                    style: TextStyle(fontSize: 45),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -125,42 +180,6 @@ class Zekr extends StatelessWidget {
         ],
       );
 
-  TweenAnimationBuilder<Offset> btn(BuildContext context, Size size) {
-    return TweenAnimationBuilder<Offset>(
-      duration: const Duration(seconds: 1),
-      tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
-      builder: (BuildContext context, Offset value, Widget child) =>
-          Transform.translate(
-        offset: value,
-        child: child,
-      ),
-      child: BlocBuilder<AzkarBloc, AzkarState>(
-        builder: (context, state) => SizedBox(
-          width: size.height / 5,
-          height: size.height / 5,
-          child: FloatingActionButton(
-            splashColor: Colors.red,
-            heroTag:
-                BlocProvider.of<AzkarBloc>(context).state.currentZekr.category,
-            onPressed: () async {
-              BlocProvider.of<AzkarBloc>(context).add(Increment());
-              if (state.currentZekr.counter == 1 &&
-                  state.currentZekr.target != 0) {
-                BlocProvider.of<AzkarBloc>(context).add(Reset());
-                controller.next();
-              }
-            },
-            child: Center(
-              child: Text(
-                ("${state.currentZekr.counter}"),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Card card(int index, BuildContext context, Size size) {
     return Card(
       clipBehavior: Clip.hardEdge,
@@ -180,13 +199,24 @@ class Zekr extends StatelessWidget {
                               barrierDismissible: true,
                               context: context,
                               builder: (_) => AlertDialog(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side:
+                                      BorderSide(color: Colors.white, width: 3),
+                                ),
                                 content: Container(
                                   constraints: BoxConstraints(
                                     maxHeight: size.height / 2,
                                   ),
                                   child: SingleChildScrollView(
                                     child: Center(
-                                      child: Text(state.currentZekr.name),
+                                      child: Text(
+                                        state.currentZekr.name,
+                                        textAlign: TextAlign.center,
+                                        textDirection: TextDirection.rtl,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -214,7 +244,9 @@ class Zekr extends StatelessWidget {
                           Expanded(
                             child: FlatButton(
                                 child: Icon(Icons.share, color: Colors.white),
-                                onPressed: () {}), //Todo:share
+                                onPressed: () {
+                                  Share.share(state.currentZekr.name);
+                                }), //Todo:share
                           ),
                           BlocProvider.of<AzkarBloc>(context)
                                       .state
@@ -248,24 +280,80 @@ class Zekr extends StatelessWidget {
                                       bool delete = await showDialog(
                                         context: context,
                                         builder: (_) => AlertDialog(
-                                          title: Text("هل تريد الحذف؟"),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              onPressed: () =>
-                                                  Router.navigator.pop(true),
-                                              child: Text("نعم"),
-                                            ),
-                                            FlatButton(
-                                              onPressed: () =>
-                                                  Router.navigator.pop(false),
-                                              child: Text("لا"),
-                                            ),
-                                          ],
+                                          backgroundColor:
+                                              Theme.of(context).primaryColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            side: BorderSide(
+                                                color: Colors.white, width: 3),
+                                          ),
+                                          title: Text(
+                                            "هل تريد الحذف؟",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                            textDirection: TextDirection.rtl,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          content: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: <Widget>[
+                                              FloatingActionButton(
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .primaryColor,
+                                                onPressed: () =>
+                                                    Router.navigator.pop(false),
+                                                child: Text(
+                                                  "لا",
+                                                  style: TextStyle(
+                                                    shadows: [
+                                                      Shadow(
+                                                        blurRadius: 2,
+                                                        offset: Offset(-1, -1),
+                                                      )
+                                                    ],
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              FloatingActionButton(
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .primaryColor,
+                                                onPressed: () =>
+                                                    Router.navigator.pop(true),
+                                                child: Text(
+                                                  "نعم",
+                                                  style: TextStyle(
+                                                    shadows: [
+                                                      Shadow(
+                                                        blurRadius: 2,
+                                                        offset: Offset(-1, -1),
+                                                      )
+                                                    ],
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
-                                      if (delete)
+                                      if (delete != null && delete) {
                                         BlocProvider.of<AzkarBloc>(context)
                                             .add(Delete());
+                                        controller.previous();
+                                      }
                                     },
                                   ),
                                 )
@@ -277,10 +365,23 @@ class Zekr extends StatelessWidget {
                                   showDialog(
                                     context: context,
                                     child: AlertDialog(
+                                      backgroundColor:
+                                          Theme.of(context).primaryColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(
+                                            color: Colors.white, width: 3),
+                                      ),
                                       content: SingleChildScrollView(
                                         child: Padding(
                                           padding: const EdgeInsets.all(16.0),
-                                          child: Text(state.currentZekr.about),
+                                          child: Text(
+                                            state.currentZekr.about,
+                                            textAlign: TextAlign.center,
+                                            textDirection: TextDirection.rtl,
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
                                       ),
                                     ),

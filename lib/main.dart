@@ -35,6 +35,17 @@ class MyApp extends StatelessWidget {
         builder: (context, state) {
           return MaterialApp(
             theme: ThemeData(
+              appBarTheme: AppBarTheme(
+                actionsIconTheme: IconThemeData(color: Colors.white),
+                iconTheme: IconThemeData(color: Colors.white),
+                textTheme: TextTheme(
+                  title: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                  ),
+                ),
+                color: state,
+              ),
               primaryColor: state,
               floatingActionButtonTheme:
                   FloatingActionButtonThemeData(backgroundColor: state),
