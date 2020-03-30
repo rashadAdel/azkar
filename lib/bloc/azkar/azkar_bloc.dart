@@ -49,7 +49,7 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
         Router.navigator.pushNamed(Router.zekr);
       }
     } else if (event is Increment) {
-      state.currentZekr.increment();
+      await state.currentZekr.increment();
     } else if (event is Reset) {
       await state.currentZekr.reset();
     } else if (event is Delete) {
