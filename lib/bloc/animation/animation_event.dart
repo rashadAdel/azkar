@@ -15,7 +15,6 @@ class Clicked extends AnimationEvent {
 
 class SecondAnimation extends AnimationEvent {
   final bool anim;
-
   SecondAnimation(this.anim);
   @override
   List<Object> get props => [anim];

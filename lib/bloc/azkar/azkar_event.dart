@@ -57,3 +57,24 @@ class Delete extends AzkarEvent {
   @override
   List<Object> get props => null;
 }
+
+class Search extends AzkarEvent {
+  String where;
+  Search._();
+
+  Search.byId(int id) {
+    this.where = " `id`=$id ";
+  }
+  Search.byName(String name) {
+    this.where = " `name` like '%$name%'";
+  }
+
+  @override
+  List<Object> get props => [where];
+}
+
+class ConvertFavorate extends AzkarEvent {
+  const ConvertFavorate();
+  @override
+  List<Object> get props => [];
+}

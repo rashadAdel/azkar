@@ -1,17 +1,46 @@
+import 'dart:math';
+
+import 'package:audioplayers/audio_cache.dart';
 import 'package:azkar/bloc/animation/animation_bloc.dart';
 import 'package:azkar/bloc/azkar/azkar_bloc.dart';
+import 'package:azkar/model/zekr.dart';
 import 'package:azkar/screens/category.dart';
+import 'package:azkar/screens/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:share/share.dart';
-// import 'package:vibration/vibration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vibration/vibration.dart';
 import '../main.dart';
 import '../Routes/Router.gr.dart';
 
-class Zekr extends StatelessWidget {
-  Zekr({Key key}) : super(key: key);
+class ZekrPage extends StatefulWidget {
+  ZekrPage({Key key}) : super(key: key);
+
+  @override
+  _ZekrPageState createState() => _ZekrPageState();
+}
+
+class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
   final SwiperController controller = SwiperController();
+  AnimationController rotationController;
+
+  @override
+  void initState() {
+    rotationController = AnimationController(
+        duration: const Duration(milliseconds: 500),
+        vsync: this,
+        upperBound: pi * 2);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    rotationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +57,7 @@ class Zekr extends StatelessWidget {
               backGround,
               swiper(size, context),
               restBtn(context),
-              state.currentZekr.category == CategoryNames.Custom
-                  ? addBtn(context)
-                  : Container(),
+              state.title == "أذكار مفضلة" ? addBtn(context) : Container(),
             ],
           )),
     );
@@ -46,24 +73,27 @@ class Zekr extends StatelessWidget {
         offset: value,
         child: child,
       ),
-      child: Swiper(
-        onIndexChanged: (index) {
-          BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
-        },
-        controller: controller,
-        itemCount: BlocProvider.of<AzkarBloc>(context).state.list.length,
-        loop: false,
-        control: SwiperPagination(),
-        curve: Curves.fastOutSlowIn,
-        scrollDirection: Axis.vertical,
-        layout: SwiperLayout.STACK,
-        duration: 500,
-        itemWidth: size.width * .9,
-        pagination: FractionPaginationBuilder(),
-        itemHeight: size.height / 2.5,
-        itemBuilder: (BuildContext context, int index) =>
-            card(index, context, size),
-      ),
+      child: (BlocProvider.of<AzkarBloc>(context).state.list.length < 2)
+          ? card(0, context)
+          : Swiper(
+              onIndexChanged: (index) {
+                BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
+              },
+              index: BlocProvider.of<AzkarBloc>(context).state.pos,
+              controller: controller,
+              itemCount: BlocProvider.of<AzkarBloc>(context).state.list.length,
+              loop: false,
+              control: SwiperPagination(),
+              curve: Curves.fastOutSlowIn,
+              scrollDirection: Axis.vertical,
+              layout: SwiperLayout.STACK,
+              duration: 500,
+              itemWidth: size.width * .9,
+              pagination: FractionPaginationBuilder(),
+              itemHeight: size.height / 2.5,
+              itemBuilder: (BuildContext context, int index) =>
+                  card(index, context),
+            ),
     );
   }
 
@@ -74,8 +104,7 @@ class Zekr extends StatelessWidget {
           Positioned(bottom: 15, right: value, child: child),
       child: FloatingActionButton(
         splashColor: Colors.red,
-        heroTag:
-            "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 2",
+        heroTag: "addBtn",
         child: Icon(Icons.add),
         onPressed: () {
           BlocProvider.of<AzkarBloc>(context)
@@ -95,15 +124,24 @@ class Zekr extends StatelessWidget {
       ),
       duration: const Duration(milliseconds: 700),
       tween: Tween<double>(begin: -16, end: 16.0),
-      child: FloatingActionButton(
-        splashColor: Colors.red,
-        heroTag:
-            "${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category} 3",
-        child: Icon(Icons.restore),
-        onPressed: () {
-          //Todo:Make sound
-          //Todo:Make Animation Round
-          BlocProvider.of<AzkarBloc>(context).add(Reset());
+      child: BlocBuilder<AnimationBloc, AnimationState>(
+        builder: (context, state) {
+          return RotationTransition(
+            turns: Tween(begin: 0.0, end: 1.0).animate(rotationController),
+            child: FloatingActionButton(
+              splashColor: Colors.red,
+              heroTag: "restBtn",
+              child: Icon(Icons.restore),
+              onPressed: () async {
+                rotationController.forward(from: 0.0);
+                if ((await SharedPreferences.getInstance()).getBool("sound") ??
+                    true) AudioCache().play("sounds/delete.mp3");
+                BlocProvider.of<AzkarBloc>(context).add(
+                  Reset(),
+                );
+              },
+            ),
+          );
         },
       ),
     );
@@ -125,16 +163,19 @@ class Zekr extends StatelessWidget {
           child: FloatingActionButton(
             backgroundColor: Colors.white,
             splashColor: Colors.red,
-            heroTag:
-                BlocProvider.of<AzkarBloc>(context).state.currentZekr.category,
+            heroTag: "btn",
             onPressed: () async {
+              if ((await SharedPreferences.getInstance()).getBool("sound") ??
+                  true) AudioCache().play("sounds/clicked.mp3");
+
               BlocProvider.of<AzkarBloc>(context).add(Increment());
               if (state.currentZekr.counter < 2 &&
                   state.currentZekr.target != 0) {
                 BlocProvider.of<AzkarBloc>(context).add(Reset());
                 controller.next();
-                // Vibration.vibrate(duration: 500);
-                //Todo: make vibration
+                if ((await SharedPreferences.getInstance())
+                        .getBool("vibration") ??
+                    true) Vibration.vibrate();
               }
             },
             child: Padding(
@@ -159,8 +200,7 @@ class Zekr extends StatelessWidget {
   }
 
   AppBar appBar(BuildContext context) => AppBar(
-        title: Text(
-            "أذكار ${BlocProvider.of<AzkarBloc>(context).state.currentZekr.category}"),
+        title: Text("${BlocProvider.of<AzkarBloc>(context).state.title}"),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.home),
@@ -171,200 +211,126 @@ class Zekr extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.settings), //Todo:Settings screen
-            onPressed: () {},
+            onPressed: () {
+              showDialog(
+                context: context,
+                child: Settings(),
+                barrierDismissible: false,
+              );
+            },
           ),
           IconButton(
-            icon: Icon(Icons.search), //Todo:search
-            onPressed: () {},
+            icon: Icon(Icons.search),
+            onPressed: () {
+              Router.navigator.pushNamed(Router.search);
+            },
           ),
         ],
       );
 
-  Card card(int index, BuildContext context, Size size) {
-    return Card(
-      clipBehavior: Clip.hardEdge,
-      elevation: 7,
-      child: BlocBuilder<AzkarBloc, AzkarState>(
-          builder: (context, state) => Container(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            showDialog(
-                              barrierDismissible: true,
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                backgroundColor: Theme.of(context).primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side:
-                                      BorderSide(color: Colors.white, width: 3),
-                                ),
-                                content: Container(
-                                  constraints: BoxConstraints(
-                                    maxHeight: size.height / 2,
-                                  ),
-                                  child: SingleChildScrollView(
-                                    child: Center(
-                                      child: Text(
-                                        state.currentZekr.name,
-                                        textAlign: TextAlign.center,
-                                        textDirection: TextDirection.rtl,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+  Widget card(int index, BuildContext context) {
+    return Center(
+      child: Card(
+        clipBehavior: Clip.hardEdge,
+        elevation: 10,
+        child: BlocBuilder<AzkarBloc, AzkarState>(builder: (context, state) {
+          ZekrModel model = state.list[index];
+          return Container(
+            width: MediaQuery.of(context).size.width * .9,
+            height: MediaQuery.of(context).size.height / 2.5,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        showDialog(
+                          barrierDismissible: true,
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: Colors.white, width: 3),
+                            ),
+                            content: Container(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height / 2,
                               ),
-                            );
-                          },
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                state.list[index].name,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
+                              child: SingleChildScrollView(
+                                child: Center(
+                                  child: Text(
+                                    model.name,
+                                    textAlign: TextAlign.center,
+                                    textDirection: TextDirection.rtl,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
+                        );
+                      },
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            model.name,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                          ),
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Expanded(
-                            child: FlatButton(
-                                child: Icon(Icons.share, color: Colors.white),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Expanded(
+                        child: IconButton(
+                          icon: Icon(Icons.share, color: Colors.white),
+                          onPressed: () {
+                            Share.share(state.currentZekr.name);
+                          },
+                        ),
+                      ),
+                      BlocProvider.of<AzkarBloc>(context)
+                                  .state
+                                  .currentZekr
+                                  .category ==
+                              CategoryNames.Favorite
+                          ? Expanded(
+                              child: IconButton(
+                                icon: Icon(Icons.edit, color: Colors.white),
                                 onPressed: () {
-                                  Share.share(state.currentZekr.name);
-                                }), //Todo:share
-                          ),
-                          BlocProvider.of<AzkarBloc>(context)
-                                      .state
-                                      .currentZekr
-                                      .category ==
-                                  CategoryNames.Custom
-                              ? Expanded(
-                                  child: FlatButton(
-                                    child:
-                                        Icon(Icons.edit, color: Colors.white),
-                                    onPressed: () {
-                                      BlocProvider.of<AzkarBloc>(context).add(
-                                        AddOrUpdate(
-                                            zekr: state.currentZekr,
-                                            context: context),
-                                      );
-                                    },
-                                  ),
-                                )
-                              : Container(),
-                          BlocProvider.of<AzkarBloc>(context)
-                                      .state
-                                      .currentZekr
-                                      .category ==
-                                  CategoryNames.Custom
-                              ? Expanded(
-                                  child: FlatButton(
-                                    child:
-                                        Icon(Icons.delete, color: Colors.white),
-                                    onPressed: () async {
-                                      bool delete = await showDialog(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          backgroundColor:
-                                              Theme.of(context).primaryColor,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            side: BorderSide(
-                                                color: Colors.white, width: 3),
-                                          ),
-                                          title: Text(
-                                            "هل تريد الحذف؟",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold),
-                                            textDirection: TextDirection.rtl,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          content: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              FloatingActionButton(
-                                                backgroundColor:
-                                                    Theme.of(context)
-                                                        .primaryColor,
-                                                onPressed: () =>
-                                                    Router.navigator.pop(false),
-                                                child: Text(
-                                                  "لا",
-                                                  style: TextStyle(
-                                                    shadows: [
-                                                      Shadow(
-                                                        blurRadius: 2,
-                                                        offset: Offset(-1, -1),
-                                                      )
-                                                    ],
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                              FloatingActionButton(
-                                                backgroundColor:
-                                                    Theme.of(context)
-                                                        .primaryColor,
-                                                onPressed: () =>
-                                                    Router.navigator.pop(true),
-                                                child: Text(
-                                                  "نعم",
-                                                  style: TextStyle(
-                                                    shadows: [
-                                                      Shadow(
-                                                        blurRadius: 2,
-                                                        offset: Offset(-1, -1),
-                                                      )
-                                                    ],
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                      if (delete != null && delete) {
-                                        BlocProvider.of<AzkarBloc>(context)
-                                            .add(Delete());
-                                        controller.previous();
-                                      }
-                                    },
-                                  ),
-                                )
-                              : Container(),
-                          Expanded(
-                            child: FlatButton(
-                                child: Icon(Icons.info, color: Colors.white),
-                                onPressed: () {
-                                  showDialog(
+                                  BlocProvider.of<AzkarBloc>(context).add(
+                                    AddOrUpdate(zekr: model, context: context),
+                                  );
+                                },
+                              ),
+                            )
+                          : Container(),
+                      Expanded(
+                        child: IconButton(
+                          icon: Icon(
+                              model.category == CategoryNames.Favorite
+                                  ? Icons.delete
+                                  : model.isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                              color: Colors.red),
+                          onPressed: () async {
+                            bool delete = (model.isFavorite)
+                                ? await showDialog(
                                     context: context,
-                                    child: AlertDialog(
+                                    builder: (_) => AlertDialog(
                                       backgroundColor:
                                           Theme.of(context).primaryColor,
                                       shape: RoundedRectangleBorder(
@@ -372,32 +338,116 @@ class Zekr extends StatelessWidget {
                                         side: BorderSide(
                                             color: Colors.white, width: 3),
                                       ),
-                                      content: SingleChildScrollView(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16.0),
-                                          child: Text(
-                                            state.currentZekr.about,
-                                            textAlign: TextAlign.center,
-                                            textDirection: TextDirection.rtl,
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                      title: Text(
+                                        "هل تريد الحذف من المفضلة؟",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold),
+                                        textDirection: TextDirection.rtl,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      content: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          FloatingActionButton(
+                                            backgroundColor:
+                                                Theme.of(context).primaryColor,
+                                            onPressed: () =>
+                                                Router.navigator.pop(false),
+                                            child: Text(
+                                              "لا",
+                                              style: TextStyle(
+                                                shadows: [
+                                                  Shadow(
+                                                    blurRadius: 2,
+                                                    offset: Offset(-1, -1),
+                                                  )
+                                                ],
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          SizedBox(
+                                            width: 10,
+                                          ),
+                                          FloatingActionButton(
+                                            backgroundColor:
+                                                Theme.of(context).primaryColor,
+                                            onPressed: () =>
+                                                Router.navigator.pop(true),
+                                            child: Text(
+                                              "نعم",
+                                              style: TextStyle(
+                                                shadows: [
+                                                  Shadow(
+                                                    blurRadius: 2,
+                                                    offset: Offset(-1, -1),
+                                                  )
+                                                ],
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  );
-                                }),
-                          ),
-                        ],
+                                  )
+                                : true;
+
+                            if (delete != null && delete) {
+                              BlocProvider.of<AzkarBloc>(context).add(Delete());
+                              if (model.category == CategoryNames.Favorite)
+                                controller.previous();
+                            }
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: IconButton(
+                            icon: Icon(Icons.info, color: Colors.white),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                child: AlertDialog(
+                                  backgroundColor:
+                                      Theme.of(context).primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                        color: Colors.white, width: 3),
+                                  ),
+                                  content: SingleChildScrollView(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(
+                                        state.currentZekr.about,
+                                        textAlign: TextAlign.center,
+                                        textDirection: TextDirection.rtl,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
                       ),
                     ],
                   ),
-                ),
-                decoration: BoxDecoration(
-                    color: index % 2 == 0
-                        ? Colors.indigo
-                        : index % 3 == 0 ? Colors.cyan : Colors.red),
-              )),
+                ],
+              ),
+            ),
+            decoration: BoxDecoration(
+                color: index % 2 == 0
+                    ? Colors.indigo
+                    : index % 3 == 0 ? Colors.cyan : Colors.purple),
+          );
+        }),
+      ),
     );
   }
 }

@@ -44,7 +44,7 @@ class _CategoryState extends State<Category> {
           angle: -.5,
           align: Alignment.bottomLeft),
       CardData(
-          title: CategoryNames.Custom,
+          title: CategoryNames.Favorite,
           color: Color(0xff56CCF2),
           angle: .25,
           align: Alignment.bottomRight),
@@ -83,8 +83,9 @@ class _CategoryState extends State<Category> {
                                     anim.secondAnimation) {
                                   BlocProvider.of<AzkarBloc>(context).add(
                                     OpenCategory(
-                                        context: context,
-                                        categoryName: data.title),
+                                      context: context,
+                                      categoryName: data.title,
+                                    ),
                                   );
                                 }
                               },
@@ -173,5 +174,6 @@ class CategoryNames {
   static const String Muslim = "المسلم";
   static const String Pray = "الصلاة";
   static const String Sleep = "النوم";
-  static const String Custom = "مخصصة";
+  static const String Favorite = "مفضلة";
+  static const String Search = "نتائج البحث";
 }

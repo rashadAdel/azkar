@@ -28,10 +28,17 @@ dependencies:
   equatable: ^1.1.0
   page_transition: ^1.1.5
   auto_route: ^0.3.0
+  
   sqflite:
   path_provider:
   share: ^0.6.3+6
-
+  audioplayers: ^0.14.2
+  vibration: ^1.2.4
+  shared_preferences: ^0.5.6+3
+  material_design_icons_flutter: ^4.0.5045
+  url_launcher: ^5.4.2
+  firebase_core: ^0.4.4+3
+  firebase_auth: ^0.15.5+3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -51,6 +58,7 @@ flutter:
   assets:
    - assets/icons/
    - assets/images/
+   - assets/sounds/
   #  - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

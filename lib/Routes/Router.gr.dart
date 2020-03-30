@@ -4,6 +4,7 @@
 // AutoRouteGenerator
 // **************************************************************************
 
+import 'package:azkar/screens/searech.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:auto_route/auto_route.dart';
@@ -16,6 +17,7 @@ class Router {
   static const initial = '/';
   static const zekr = '/zekr';
   static const category = '/category';
+  static const search = '/zekr/search';
   static final navigator = ExtendedNavigator();
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final args = settings.arguments;
@@ -35,10 +37,22 @@ class Router {
         }
         final typedArgs = args as Key;
         return PageTransition(
-            child: Zekr(),
+            child: ZekrPage(),
             key: typedArgs,
             type: PageTransitionType.size,
             duration: Duration(milliseconds: 500),
+            curve: Curves.ease,
+            alignment: Alignment.center,
+            settings: settings);
+      case Router.search:
+        if (hasInvalidArgs<Key>(args)) {
+          return misTypedArgsRoute<Key>(args);
+        }
+        final typedArgs = args as Key;
+        return PageTransition(
+            child: SearchPage(),
+            key: typedArgs,
+            type: PageTransitionType.rightToLeft,
             curve: Curves.ease,
             alignment: Alignment.center,
             settings: settings);
