@@ -19,6 +19,7 @@ class Router {
   static const category = '/category';
   static const search = '/zekr/search';
   static final navigator = ExtendedNavigator();
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final args = settings.arguments;
     switch (settings.name) {

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:azkar/bloc/animation/animation_bloc.dart';
 import 'package:azkar/bloc/azkar/azkar_bloc.dart';
+import 'package:azkar/model/info.dart';
 import 'package:azkar/model/zekr.dart';
 import 'package:azkar/screens/category.dart';
 import 'package:azkar/screens/settings.dart';
@@ -17,7 +18,7 @@ import '../Routes/Router.gr.dart';
 
 class ZekrPage extends StatefulWidget {
   ZekrPage({Key key}) : super(key: key);
-
+  static GlobalKey<ScaffoldState> globalKey = GlobalKey<ScaffoldState>();
   @override
   _ZekrPageState createState() => _ZekrPageState();
 }
@@ -32,7 +33,6 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 500),
         vsync: this,
         upperBound: pi * 2);
-
     super.initState();
   }
 
@@ -45,25 +45,29 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     BlocProvider.of<AnimationBloc>(context).add(Clicked());
-    final Size size = MediaQuery.of(context).size;
     return BlocBuilder<AzkarBloc, AzkarState>(
-      builder: (context, state) => Scaffold(
+      builder: (context, state) {
+        return Scaffold(
+          key: ZekrPage.globalKey,
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: btn(context, size),
-          appBar: appBar(context),
+          floatingActionButton: btn(),
+          appBar: appBar(),
           body: Stack(
             children: <Widget>[
               backGround,
-              swiper(size, context),
-              restBtn(context),
-              state.title == "أذكار مفضلة" ? addBtn(context) : Container(),
+              swiper(),
+              restBtn(),
+              state.title == "أذكار مفضلة" ? addBtn() : Container(),
             ],
-          )),
+          ),
+        );
+      },
     );
   }
 
-  TweenAnimationBuilder<Offset> swiper(Size size, BuildContext context) {
+  TweenAnimationBuilder<Offset> swiper() {
+    Size size = MediaQuery.of(context).size;
     return TweenAnimationBuilder<Offset>(
       duration: Duration(milliseconds: 600),
       curve: Curves.elasticInOut,
@@ -74,7 +78,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         child: child,
       ),
       child: (BlocProvider.of<AzkarBloc>(context).state.list.length < 2)
-          ? card(0, context)
+          ? card(0)
           : Swiper(
               onIndexChanged: (index) {
                 BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
@@ -91,13 +95,12 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
               itemWidth: size.width * .9,
               pagination: FractionPaginationBuilder(),
               itemHeight: size.height / 2.5,
-              itemBuilder: (BuildContext context, int index) =>
-                  card(index, context),
+              itemBuilder: (BuildContext context, int index) => card(index),
             ),
     );
   }
 
-  TweenAnimationBuilder<double> addBtn(BuildContext context) {
+  TweenAnimationBuilder<double> addBtn() {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: -16, end: 16),
       builder: (BuildContext context, double value, Widget child) =>
@@ -115,7 +118,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
     );
   }
 
-  TweenAnimationBuilder restBtn(BuildContext context) {
+  TweenAnimationBuilder restBtn() {
     return TweenAnimationBuilder<double>(
       builder: (BuildContext context, double value, Widget child) => Positioned(
         bottom: 15,
@@ -147,7 +150,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
     );
   }
 
-  TweenAnimationBuilder<Offset> btn(BuildContext context, Size size) {
+  TweenAnimationBuilder<Offset> btn() {
     return TweenAnimationBuilder<Offset>(
       duration: const Duration(milliseconds: 700),
       tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
@@ -158,8 +161,8 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
       ),
       child: BlocBuilder<AzkarBloc, AzkarState>(
         builder: (context, state) => SizedBox(
-          width: size.height / 5,
-          height: size.height / 5,
+          width: MediaQuery.of(context).size.height / 5,
+          height: MediaQuery.of(context).size.height / 5,
           child: FloatingActionButton(
             backgroundColor: Colors.white,
             splashColor: Colors.red,
@@ -199,7 +202,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
     );
   }
 
-  AppBar appBar(BuildContext context) => AppBar(
+  AppBar appBar() => AppBar(
         title: Text("${BlocProvider.of<AzkarBloc>(context).state.title}"),
         centerTitle: true,
         leading: IconButton(
@@ -210,7 +213,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.settings), //Todo:Settings screen
+            icon: Icon(Icons.settings),
             onPressed: () {
               showDialog(
                 context: context,
@@ -228,7 +231,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         ],
       );
 
-  Widget card(int index, BuildContext context) {
+  Widget card(int index) {
     return Center(
       child: Card(
         clipBehavior: Clip.hardEdge,
@@ -247,29 +250,14 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        showDialog(
-                          barrierDismissible: true,
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: Colors.white, width: 3),
-                            ),
-                            content: Container(
-                              constraints: BoxConstraints(
-                                maxHeight:
-                                    MediaQuery.of(context).size.height / 2,
-                              ),
-                              child: SingleChildScrollView(
-                                child: Center(
-                                  child: Text(
-                                    model.name,
-                                    textAlign: TextAlign.center,
-                                    textDirection: TextDirection.rtl,
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
+                        showCustomDialog(
+                          child: SingleChildScrollView(
+                            child: Center(
+                              child: Text(
+                                model.name,
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.rtl,
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
@@ -297,7 +285,8 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                         child: IconButton(
                           icon: Icon(Icons.share, color: Colors.white),
                           onPressed: () {
-                            Share.share(state.currentZekr.name);
+                            Share.share(
+                                "${state.currentZekr.name} \n\n\n ${state.currentZekr.about} \n\n ${AppInfo.downloadLink}");
                           },
                         ),
                       ),
@@ -328,73 +317,68 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                               color: Colors.red),
                           onPressed: () async {
                             bool delete = (model.isFavorite)
-                                ? await showDialog(
-                                    context: context,
-                                    builder: (_) => AlertDialog(
-                                      backgroundColor:
-                                          Theme.of(context).primaryColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                        side: BorderSide(
-                                            color: Colors.white, width: 3),
-                                      ),
-                                      title: Text(
-                                        "هل تريد الحذف من المفضلة؟",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold),
-                                        textDirection: TextDirection.rtl,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      content: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          FloatingActionButton(
-                                            backgroundColor:
-                                                Theme.of(context).primaryColor,
-                                            onPressed: () =>
-                                                Router.navigator.pop(false),
-                                            child: Text(
-                                              "لا",
-                                              style: TextStyle(
-                                                shadows: [
-                                                  Shadow(
-                                                    blurRadius: 2,
-                                                    offset: Offset(-1, -1),
-                                                  )
-                                                ],
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
+                                ? await showCustomDialog(
+                                    child: Column(
+                                      children: <Widget>[
+                                        Text(
+                                          "هل تريد الحذف من المفضلة؟",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                          textDirection: TextDirection.rtl,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        SizedBox(height: 30),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            FloatingActionButton(
+                                              backgroundColor: Theme.of(context)
+                                                  .primaryColor,
+                                              onPressed: () =>
+                                                  Router.navigator.pop(false),
+                                              child: Text(
+                                                "لا",
+                                                style: TextStyle(
+                                                  shadows: [
+                                                    Shadow(
+                                                      blurRadius: 2,
+                                                      offset: Offset(-1, -1),
+                                                    )
+                                                  ],
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          FloatingActionButton(
-                                            backgroundColor:
-                                                Theme.of(context).primaryColor,
-                                            onPressed: () =>
-                                                Router.navigator.pop(true),
-                                            child: Text(
-                                              "نعم",
-                                              style: TextStyle(
-                                                shadows: [
-                                                  Shadow(
-                                                    blurRadius: 2,
-                                                    offset: Offset(-1, -1),
-                                                  )
-                                                ],
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            FloatingActionButton(
+                                              backgroundColor: Theme.of(context)
+                                                  .primaryColor,
+                                              onPressed: () =>
+                                                  Router.navigator.pop(true),
+                                              child: Text(
+                                                "نعم",
+                                                style: TextStyle(
+                                                  shadows: [
+                                                    Shadow(
+                                                      blurRadius: 2,
+                                                      offset: Offset(-1, -1),
+                                                    )
+                                                  ],
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   )
                                 : true;
@@ -411,27 +395,12 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                         child: IconButton(
                             icon: Icon(Icons.info, color: Colors.white),
                             onPressed: () {
-                              showDialog(
-                                context: context,
-                                child: AlertDialog(
-                                  backgroundColor:
-                                      Theme.of(context).primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: BorderSide(
-                                        color: Colors.white, width: 3),
-                                  ),
-                                  content: SingleChildScrollView(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Text(
-                                        state.currentZekr.about,
-                                        textAlign: TextAlign.center,
-                                        textDirection: TextDirection.rtl,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
+                              showCustomDialog(
+                                child: Text(
+                                  state.currentZekr.about,
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.rtl,
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               );
                             }),
@@ -447,6 +416,25 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                     : index % 3 == 0 ? Colors.cyan : Colors.purple),
           );
         }),
+      ),
+    );
+  }
+
+  Future showCustomDialog({Widget child}) {
+    return showDialog(
+      context: context,
+      child: AlertDialog(
+        backgroundColor: Theme.of(context).primaryColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white, width: 3),
+        ),
+        content: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: child,
+          ),
+        ),
       ),
     );
   }

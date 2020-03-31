@@ -2,18 +2,22 @@ import 'package:azkar/bloc/animation/animation_bloc.dart';
 import 'package:azkar/bloc/azkar/azkar_bloc.dart';
 import 'package:azkar/bloc/thems/ThemeBloc.dart';
 import 'package:azkar/model/card.dart';
+import 'package:azkar/model/info.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../main.dart';
 
 class Category extends StatefulWidget {
+  static GlobalKey<ScaffoldState> global = GlobalKey<ScaffoldState>();
   Category({Key key}) : super(key: key);
-
   @override
   _CategoryState createState() => _CategoryState();
 }
 
 class _CategoryState extends State<Category> {
+  List<CardData> cardsData;
+
   @override
   void initState() {
     super.initState();
@@ -51,7 +55,6 @@ class _CategoryState extends State<Category> {
     ];
   }
 
-  List<CardData> cardsData;
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -128,10 +131,14 @@ class _CategoryState extends State<Category> {
           ),
         )
         .toList();
+    Future.delayed(Duration(seconds: 1), () {
+      AppInfo.checkUpdate();
+    });
     return WillPopScope(
       onWillPop: _onWillPop,
       child: SafeArea(
         child: Scaffold(
+          key: Category.global,
           body: Stack(children: <Widget>[backGround] + cards),
         ),
       ),
@@ -142,7 +149,7 @@ class _CategoryState extends State<Category> {
     return await showDialog(
           // Todo: better Look
           context: context,
-          builder: (context) => new AlertDialog(
+          builder: (context) => AlertDialog(
             backgroundColor: Colors.orange[100],
             title: new Text(
               ' الخروج',
