@@ -147,7 +147,6 @@ class _CategoryState extends State<Category> {
 
   Future<bool> _onWillPop() async {
     return await showDialog(
-          // Todo: better Look
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: Colors.orange[100],

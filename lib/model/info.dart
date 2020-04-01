@@ -1,6 +1,7 @@
 import 'package:azkar/Routes/Router.gr.dart';
 import 'package:azkar/screens/category.dart';
 import 'package:azkar/screens/zekr.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -35,10 +36,10 @@ class AppInfo {
         }
         // there is network
       } else {
-        cloudVersion.then(
-          (_version) {
+        Firestore().collection("info").document("1").get().then(
+          (snapshot) {
             //There is update
-            if (_version > version) {
+            if (snapshot.data['version'] > version) {
               if (showOnFailed) Router.navigator.pop();
               scafoldState.showSnackBar(
                 SnackBar(
@@ -86,7 +87,4 @@ class AppInfo {
       }
     });
   }
-
-  ///Todo:get from firebase
-  static Future<double> get cloudVersion async => 2;
 }
