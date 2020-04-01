@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 class AppInfo {
   static const String downloadLink = 'https://flutter4u.page.link/download';
   static const String whatsappLink = "https://wa.me/201017949727";
-  static const double version = 1;
+  static const double version = 2;
 
   static void checkUpdate({bool showOnFailed = false}) {
     ScaffoldState scafoldState = (showOnFailed)
