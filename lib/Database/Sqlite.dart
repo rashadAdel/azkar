@@ -26,16 +26,15 @@ class SqlController extends Repo {
             onUpgrade: _onUpgrade);
   }
 
-  _onCreate(Database db, int version) {
-    db.execute(_ZekrInitial._create).then(
-      (_val) {
-        if (_ZekrInitial._firstData.isNotEmpty) {
-          for (Zekr zekr in _ZekrInitial._firstData) {
-            Repos.zekr.insert(zekr);
-          }
-        }
-      },
-    );
+  _onCreate(Database db, int version) async {
+    await db.execute(_ZekrInitial._create);
+    if (_ZekrInitial._firstData.isNotEmpty) {
+      _ZekrInitial._firstData.forEach(
+        (_zekr) {
+          db.insert("Zekr", _zekr.toMap);
+        },
+      );
+    }
   }
 
   Future<List<Map<String, dynamic>>> query(String tableName,

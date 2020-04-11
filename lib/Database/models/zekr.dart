@@ -37,9 +37,7 @@ class Zekr extends Model {
       "target": target,
       "actually": actually,
       "category": category,
-      "isFavorite": (this.isFavorite != null && this.isFavorite)
-          ? 1
-          : (this.isFavorite == null) ? null : 0,
+      "isFavorite": (this.isFavorite == null) ? null : this.isFavorite ? 1 : 0,
     }..removeWhere((k, v) => v == null);
   }
 

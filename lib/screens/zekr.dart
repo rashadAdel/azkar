@@ -23,13 +23,13 @@ class ZekrPage extends StatefulWidget {
 }
 
 class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
-  final SwiperController controller = SwiperController();
-  AnimationController rotationController;
+  final SwiperController _controller = SwiperController();
+  AnimationController _rotationController;
   final ScrollController _scrolText = ScrollController();
 
   @override
   void initState() {
-    rotationController = AnimationController(
+    _rotationController = AnimationController(
         duration: const Duration(milliseconds: 500),
         vsync: this,
         upperBound: pi * 2);
@@ -38,7 +38,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    rotationController.dispose();
+    _rotationController.dispose();
     _scrolText.dispose();
     super.dispose();
   }
@@ -48,22 +48,26 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
     BlocProvider.of<AnimationBloc>(context).add(Clicked());
     return BlocBuilder<AzkarBloc, AzkarState>(
       builder: (context, state) {
-        return Scaffold(
-          key: ZekrPage.globalKey,
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: btn(),
-          appBar: appBar(),
-          body: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              backGround,
-              swiper(),
-              restBtn(),
-              state.title == "أذكار مفضلة" ? addBtn() : Container(),
-            ],
-          ),
-        );
+        if ((state.list.isEmpty)) {
+          return Scaffold(body: backGround);
+        } else {
+          return Scaffold(
+            key: ZekrPage.globalKey,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: btn(),
+            appBar: appBar(),
+            body: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                backGround,
+                swiper(),
+                restBtn(),
+                state.title == "أذكار مفضلة" ? addBtn() : Container(),
+              ],
+            ),
+          );
+        }
       },
     );
   }
@@ -90,7 +94,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                 BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
               },
               index: BlocProvider.of<AzkarBloc>(context).state.pos,
-              controller: controller,
+              controller: _controller,
               itemCount: BlocProvider.of<AzkarBloc>(context).state.list.length,
               loop: false,
               control: SwiperPagination(),
@@ -136,7 +140,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
       child: BlocBuilder<AnimationBloc, AnimationState>(
         builder: (context, state) {
           return RotationTransition(
-            turns: Tween(begin: 0.0, end: 1.0).animate(rotationController),
+            turns: Tween(begin: 0.0, end: 1.0).animate(_rotationController),
             child: FloatingActionButton(
               splashColor: Colors.red,
               heroTag: "restBtn",
@@ -150,7 +154,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                       } catch (e) {}
                   },
                 );
-                rotationController.forward(from: 0.0);
+                _rotationController.forward(from: 0.0);
 
                 BlocProvider.of<AzkarBloc>(context).add(
                   Reset(),
@@ -211,7 +215,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
 
                 BlocProvider.of<AzkarBloc>(context).add(Reset());
 
-                controller.next();
+                _controller.next();
               }
             },
             child: Padding(
@@ -223,7 +227,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                 ),
                 child: Center(
                   child: Text(
-                    ("${state.currentZekr.counter}"),
+                    ("${state?.currentZekr?.counter}"),
                     style: TextStyle(fontSize: 45),
                   ),
                 ),
@@ -412,7 +416,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
                       if (delete != null && delete) {
                         BlocProvider.of<AzkarBloc>(context).add(Delete());
                         if (model.category == CategoryNames.Favorite)
-                          controller.previous();
+                          _controller.previous();
                       }
                     },
                   ),

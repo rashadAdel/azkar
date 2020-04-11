@@ -70,22 +70,23 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
       state.list[state.pos] = await Repos.zekr
           .update(Zekr(actually: 0, id: state.list[state.pos].id));
     } else if (event is Delete) {
+      int id = state.currentZekr.id;
       if (state.currentZekr.category == CategoryNames.Favorite) {
-        await Repos.zekr.delete(model: Zekr(id: state.currentZekr.id));
+        //if it the last card
+        if (state.list.length == 1) {
+          Router.navigator.pop();
+          await Repos.zekr.delete(model: Zekr(id: id));
+          return;
+        }
+
+        //if it the last index
+        if (state.pos == state.list.length - 1) {
+          --state.pos;
+        }
       } else {
         state.list[state.pos] = await Repos.zekr.update(
-          Zekr(
-              id: state.currentZekr.id,
-              isFavorite: !state.currentZekr.isFavorite),
+          Zekr(id: id, isFavorite: !state.currentZekr.isFavorite),
         );
-      }
-//if it the last card
-      if (state.list.length == 1) {
-        Router.navigator.pop();
-      }
-//if it the last index
-      else if (state.pos == state.list.length - 1) {
-        --state.pos;
       }
     }
     List<Zekr> lst = await Repos.zekr.query(where: queryWhere);
