@@ -1,0 +1,11 @@
+
+// Todo fixed scroll inside scroll
+// Todo login auth
+// Todo auto sync
+
+- scroll jumb to 0 when btn pressed
+- improved inhanced
+- add number for search result
+- fixed animation
+- make code clean
+- fixed after search

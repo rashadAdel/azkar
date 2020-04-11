@@ -1,6 +1,6 @@
-import 'package:azkar/Routes/Router.gr.dart';
-import 'package:azkar/bloc/azkar/azkar_bloc.dart';
-import 'package:azkar/model/zekr.dart';
+import '../Database/abstract.dart';
+import '../Routes/Router.gr.dart';
+import '../bloc/azkar/azkar_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,7 +23,9 @@ class _SearchPageState extends State<SearchPage> {
           onChanged: (val) {
             setState(() {});
           },
-          onEditingComplete: () {
+          onEditingComplete: () async {
+            FocusScope.of(context).requestFocus(FocusNode());
+            await Future.delayed(Duration(milliseconds: 100));
             BlocProvider.of<AzkarBloc>(context)
                 .add(Search.byName(_searchControll.text));
 
@@ -45,9 +47,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget lstView() {
-    return FutureBuilder<List<ZekrModel>>(
-      future: ZekrModel.fromDataBase(
-          where: "`name` like '%${_searchControll.text}%'"),
+    return FutureBuilder<List<Zekr>>(
+      future:
+          Repos.zekr.query(where: "`name` like '%${_searchControll.text}%'"),
       builder: (context, snapshot) {
         return (snapshot.connectionState == ConnectionState.waiting)
             ? Center(
@@ -56,12 +58,13 @@ class _SearchPageState extends State<SearchPage> {
             : ListView.builder(
                 itemCount: snapshot.data.length,
                 itemBuilder: (BuildContext context, int index) {
-                  ZekrModel zekr = snapshot.data[index];
+                  Zekr zekr = snapshot.data[index];
 
                   return ListTile(
                     onTap: () {
-                      BlocProvider.of<AzkarBloc>(context)
-                          .add(Search.byId(zekr.id));
+                      BlocProvider.of<AzkarBloc>(context).add(
+                        Search.byId(zekr.id),
+                      );
                       Router.navigator.pop();
                     },
                     contentPadding: EdgeInsets.all(20),

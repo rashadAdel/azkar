@@ -4,14 +4,16 @@ class AzkarState extends Equatable {
   int pos;
 
   String title;
-  ZekrModel get currentZekr => list.isNotEmpty ? list[pos] : ZekrModel();
-  final List<ZekrModel> list;
+  Zekr get currentZekr => list.isNotEmpty ? list[pos] : Zekr();
+  final List<Zekr> list;
 
   AzkarState({
-    this.title,
+    String title,
     this.list,
     this.pos = 0,
-  });
+  }) {
+    this.title = title ?? "نتائج البحث ${list.length}";
+  }
   @override
   List<Object> get props => [list, pos, title];
 }

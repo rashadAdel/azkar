@@ -1,12 +1,12 @@
-import 'package:azkar/Routes/Router.gr.dart';
-import 'package:azkar/model/zekr.dart';
+import '../Database/abstract.dart';
+import '../Routes/Router.gr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class EditDialog extends StatefulWidget {
-  final ZekrModel zekrModel;
-  EditDialog({Key key, this.zekrModel}) : super(key: key) {
-    infinity = zekrModel == null || zekrModel.target == 0;
+  final Zekr zekr;
+  EditDialog({Key key, this.zekr}) : super(key: key) {
+    infinity = zekr == null || zekr.target == 0;
   }
   @override
   _EditDialogState createState() => _EditDialogState();
@@ -15,7 +15,8 @@ class EditDialog extends StatefulWidget {
 bool infinity;
 
 class _EditDialogState extends State<EditDialog> {
-  ZekrModel get _getData => ZekrModel(
+  Zekr get _getData => Zekr(
+      id: widget.zekr?.id,
       about: _txtAbout.text,
       name: _txtZekr.text,
       target: infinity ? 0 : int.tryParse(_txtTarget.text) ?? 1,
@@ -26,10 +27,10 @@ class _EditDialogState extends State<EditDialog> {
   @override
   void initState() {
     super.initState();
-    _txtZekr = TextEditingController()..text = widget.zekrModel?.name;
-    _txtAbout = TextEditingController()..text = widget.zekrModel?.about;
+    _txtZekr = TextEditingController()..text = widget.zekr?.name;
+    _txtAbout = TextEditingController()..text = widget.zekr?.about;
     _txtTarget = TextEditingController()
-      ..text = widget.zekrModel?.target?.toString();
+      ..text = widget.zekr?.target?.toString();
 
     _targetFocus = FocusNode()
       ..addListener(() {
@@ -53,7 +54,7 @@ class _EditDialogState extends State<EditDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.orange[100],
-      title: Text(widget.zekrModel == null ? "أضافة ذكر" : "تعديل ذكر",
+      title: Text(widget.zekr == null ? "أضافة ذكر" : "تعديل ذكر",
           textAlign: TextAlign.center),
       content: SingleChildScrollView(
         child: Form(
@@ -186,14 +187,14 @@ class _EditDialogState extends State<EditDialog> {
           onPressed: () {
             SystemChannels.textInput.invokeMethod('TextInput.hide');
             if (!_formKey.currentState.validate()) return;
-            if (widget.zekrModel == null) {
-              _getData.insert();
+            if (widget.zekr == null) {
+              Repos.zekr.insert(_getData);
             } else {
-              widget.zekrModel.update(map: _getData.toMap);
+              Repos.zekr.update(_getData);
             }
-            Router.navigator.pop(widget.zekrModel ?? _getData);
+            Router.navigator.pop(widget.zekr ?? _getData);
           },
-          child: Text(widget.zekrModel == null ? "أضافة" : "تعديل"),
+          child: Text(widget.zekr == null ? "أضافة" : "تعديل"),
         ),
         FlatButton(
           onPressed: () {

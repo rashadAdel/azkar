@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:azkar/Routes/Router.gr.dart';
-import 'package:azkar/bloc/animation/animation_bloc.dart';
-import 'package:azkar/model/zekr.dart';
-import 'package:azkar/screens/category.dart';
-import 'package:azkar/screens/edit.dart';
+import '../../Database/abstract.dart';
+import '../../Routes/Router.gr.dart';
+import '../animation/animation_bloc.dart';
+import '../../screens/category.dart';
+import '../../screens/edit.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -23,15 +23,16 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
   ) async* {
     //Edit Or Add in Favorate
     if (event is AddOrUpdate) {
-      ZekrModel zekr = await showDialog(
+      Zekr zekr = await showDialog(
         context: event.context,
         barrierDismissible: false,
         child: EditDialog(
-          zekrModel: event.zekr,
+          zekr: event.zekr,
         ),
       );
       //That's if open Favorate For First Time and it insert
       if (zekr != null &&
+          //if from Category screen
           event.context.widget.toString().contains("Animation")) {
         add(
           OpenCategory(
@@ -47,7 +48,7 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
           : "`category`='${event.categoryName}'";
 
       //Fetsh Data
-      List<ZekrModel> lst = await ZekrModel.fromDataBase(where: queryWhere);
+      List<Zekr> lst = await Repos.zekr.query(where: queryWhere);
 
       //if it Favorate and empty
       if (lst.isEmpty && event.categoryName == CategoryNames.Favorite) {
@@ -60,17 +61,23 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
             : Router.zekr);
       }
     } else if (event is Search) {
-      state.title = "نتائج البحث";
+      state.title = null;
       queryWhere = event.where;
     } else if (event is Increment) {
-      await state.currentZekr.increment();
+      state.list[state.pos] = await Repos.zekr.update(Zekr(
+          id: state.currentZekr.id, actually: state.currentZekr.actually + 1));
     } else if (event is Reset) {
-      await state.currentZekr.reset();
+      state.list[state.pos] = await Repos.zekr
+          .update(Zekr(actually: 0, id: state.list[state.pos].id));
     } else if (event is Delete) {
       if (state.currentZekr.category == CategoryNames.Favorite) {
-        await state.currentZekr.delete();
+        await Repos.zekr.delete(model: Zekr(id: state.currentZekr.id));
       } else {
-        await state.currentZekr.convertFavorate();
+        state.list[state.pos] = await Repos.zekr.update(
+          Zekr(
+              id: state.currentZekr.id,
+              isFavorite: !state.currentZekr.isFavorite),
+        );
       }
 //if it the last card
       if (state.list.length == 1) {
@@ -81,13 +88,13 @@ class AzkarBloc extends Bloc<AzkarEvent, AzkarState> {
         --state.pos;
       }
     }
-    List<ZekrModel> lst = await ZekrModel.fromDataBase(where: queryWhere);
+    List<Zekr> lst = await Repos.zekr.query(where: queryWhere);
 
     if (lst != null && lst.isNotEmpty) {
       yield AzkarState(list: lst, pos: state.pos, title: state.title);
     } else {
       yield AzkarState(
-          list: [ZekrModel(name: "لا توجد نتائج", about: "")],
+          list: [Zekr(name: "لا توجد نتائج", about: "")],
           title: "لا توجد نتائج");
     }
   }

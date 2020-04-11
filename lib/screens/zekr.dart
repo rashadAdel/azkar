@@ -1,12 +1,11 @@
 import 'dart:math';
-
 import 'package:audioplayers/audio_cache.dart';
-import 'package:azkar/bloc/animation/animation_bloc.dart';
-import 'package:azkar/bloc/azkar/azkar_bloc.dart';
-import 'package:azkar/model/info.dart';
-import 'package:azkar/model/zekr.dart';
-import 'package:azkar/screens/category.dart';
-import 'package:azkar/screens/settings.dart';
+import 'package:azkar/Database/abstract.dart';
+import '../bloc/animation/animation_bloc.dart';
+import '../bloc/azkar/azkar_bloc.dart';
+import '../model/info.dart';
+import 'category.dart';
+import 'settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
@@ -26,6 +25,7 @@ class ZekrPage extends StatefulWidget {
 class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
   final SwiperController controller = SwiperController();
   AnimationController rotationController;
+  final ScrollController _scrolText = ScrollController();
 
   @override
   void initState() {
@@ -39,6 +39,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     rotationController.dispose();
+    _scrolText.dispose();
     super.dispose();
   }
 
@@ -54,6 +55,7 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
           floatingActionButton: btn(),
           appBar: appBar(),
           body: Stack(
+            alignment: Alignment.center,
             children: <Widget>[
               backGround,
               swiper(),
@@ -78,7 +80,11 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         child: child,
       ),
       child: (BlocProvider.of<AzkarBloc>(context).state.list.length < 2)
-          ? card(0)
+          ? SizedBox(
+              width: size.width * .9,
+              height: size.height / 2.5,
+              child: card(0),
+            )
           : Swiper(
               onIndexChanged: (index) {
                 BlocProvider.of<AzkarBloc>(context).add(ChangePosition(index));
@@ -92,8 +98,8 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
               scrollDirection: Axis.vertical,
               layout: SwiperLayout.STACK,
               duration: 500,
-              itemWidth: size.width * .9,
               pagination: FractionPaginationBuilder(),
+              itemWidth: size.width * .9,
               itemHeight: size.height / 2.5,
               itemBuilder: (BuildContext context, int index) => card(index),
             ),
@@ -135,10 +141,17 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
               splashColor: Colors.red,
               heroTag: "restBtn",
               child: Icon(Icons.restore),
-              onPressed: () async {
+              onPressed: () {
+                SharedPreferences.getInstance().then(
+                  (_shared) {
+                    if (_shared.getBool("sound") ?? true)
+                      try {
+                        AudioCache().play("sounds/delete.mp3");
+                      } catch (e) {}
+                  },
+                );
                 rotationController.forward(from: 0.0);
-                if ((await SharedPreferences.getInstance()).getBool("sound") ??
-                    true) AudioCache().play("sounds/delete.mp3");
+
                 BlocProvider.of<AzkarBloc>(context).add(
                   Reset(),
                 );
@@ -150,15 +163,16 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
     );
   }
 
-  TweenAnimationBuilder<Offset> btn() {
+  Widget btn() {
     return TweenAnimationBuilder<Offset>(
       duration: const Duration(milliseconds: 700),
       tween: Tween<Offset>(begin: Offset(0, 100), end: Offset.zero),
-      builder: (BuildContext context, Offset value, Widget child) =>
-          Transform.translate(
-        offset: value,
-        child: child,
-      ),
+      builder: (BuildContext context, Offset value, Widget child) {
+        return Transform.translate(
+          offset: value,
+          child: child,
+        );
+      },
       child: BlocBuilder<AzkarBloc, AzkarState>(
         builder: (context, state) => SizedBox(
           width: MediaQuery.of(context).size.height / 5,
@@ -167,18 +181,37 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
             backgroundColor: Colors.white,
             splashColor: Colors.red,
             heroTag: "btn",
-            onPressed: () async {
-              if ((await SharedPreferences.getInstance()).getBool("sound") ??
-                  true) AudioCache().play("sounds/clicked.mp3");
+            onPressed: () {
+              //return scroll
+              _scrolText.jumpTo(0);
 
+              //check if sound enable to play sound
+              SharedPreferences.getInstance().then(
+                (shared) {
+                  if (shared.getBool("sound") ?? true)
+                    try {
+                      AudioCache().play("sounds/clicked.mp3");
+                    } catch (e) {}
+                },
+              );
+
+              //call Bloc increment
               BlocProvider.of<AzkarBloc>(context).add(Increment());
+
+              // if the last counter
               if (state.currentZekr.counter < 2 &&
                   state.currentZekr.target != 0) {
+                //if sound enable play
+                SharedPreferences.getInstance().then(
+                  (_shared) {
+                    if (_shared.getBool("vibration") ?? true)
+                      Vibration.vibrate();
+                  },
+                );
+
                 BlocProvider.of<AzkarBloc>(context).add(Reset());
+
                 controller.next();
-                if ((await SharedPreferences.getInstance())
-                        .getBool("vibration") ??
-                    true) Vibration.vibrate();
               }
             },
             child: Padding(
@@ -231,192 +264,178 @@ class _ZekrPageState extends State<ZekrPage> with TickerProviderStateMixin {
         ],
       );
 
-  Widget card(int index) {
-    return Center(
-      child: Card(
-        clipBehavior: Clip.hardEdge,
-        elevation: 10,
-        child: BlocBuilder<AzkarBloc, AzkarState>(builder: (context, state) {
-          ZekrModel model = state.list[index];
-          return Container(
-            width: MediaQuery.of(context).size.width * .9,
-            height: MediaQuery.of(context).size.height / 2.5,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        showCustomDialog(
-                          child: SingleChildScrollView(
-                            child: Center(
-                              child: Text(
-                                model.name,
-                                textAlign: TextAlign.center,
-                                textDirection: TextDirection.rtl,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            model.name,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                            ),
-                          ),
+  Card card(int index) {
+    return Card(
+      color: index % 2 == 0
+          ? Colors.indigo
+          : index % 3 == 0 ? Colors.cyan : Colors.purple,
+      elevation: 10,
+      child: BlocBuilder<AzkarBloc, AzkarState>(builder: (context, state) {
+        Zekr model = state.list[index];
+        return Column(
+          children: <Widget>[
+            Expanded(
+              child: InkWell(
+                onTap: () {
+                  showCustomDialog(
+                    child: SingleChildScrollView(
+                      child: Center(
+                        child: Text(
+                          model.name,
+                          textAlign: TextAlign.center,
+                          textDirection: TextDirection.rtl,
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ),
+                  );
+                },
+                child: SingleChildScrollView(
+                  controller: _scrolText,
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    model.name,
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Expanded(
-                        child: IconButton(
-                          icon: Icon(Icons.share, color: Colors.white),
-                          onPressed: () {
-                            Share.share(
-                                "${state.currentZekr.name} \n\n\n ${state.currentZekr.about} \n\n ${AppInfo.downloadLink}");
-                          },
-                        ),
-                      ),
-                      BlocProvider.of<AzkarBloc>(context)
-                                  .state
-                                  .currentZekr
-                                  .category ==
-                              CategoryNames.Favorite
-                          ? Expanded(
-                              child: IconButton(
-                                icon: Icon(Icons.edit, color: Colors.white),
-                                onPressed: () {
-                                  BlocProvider.of<AzkarBloc>(context).add(
-                                    AddOrUpdate(zekr: model, context: context),
-                                  );
-                                },
-                              ),
-                            )
-                          : Container(),
-                      Expanded(
-                        child: IconButton(
-                          icon: Icon(
-                              model.category == CategoryNames.Favorite
-                                  ? Icons.delete
-                                  : model.isFavorite
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                              color: Colors.red),
-                          onPressed: () async {
-                            bool delete = (model.isFavorite)
-                                ? await showCustomDialog(
-                                    child: Column(
-                                      children: <Widget>[
-                                        Text(
-                                          "هل تريد الحذف من المفضلة؟",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold),
-                                          textDirection: TextDirection.rtl,
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        SizedBox(height: 30),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: <Widget>[
-                                            FloatingActionButton(
-                                              backgroundColor: Theme.of(context)
-                                                  .primaryColor,
-                                              onPressed: () =>
-                                                  Router.navigator.pop(false),
-                                              child: Text(
-                                                "لا",
-                                                style: TextStyle(
-                                                  shadows: [
-                                                    Shadow(
-                                                      blurRadius: 2,
-                                                      offset: Offset(-1, -1),
-                                                    )
-                                                  ],
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              width: 10,
-                                            ),
-                                            FloatingActionButton(
-                                              backgroundColor: Theme.of(context)
-                                                  .primaryColor,
-                                              onPressed: () =>
-                                                  Router.navigator.pop(true),
-                                              child: Text(
-                                                "نعم",
-                                                style: TextStyle(
-                                                  shadows: [
-                                                    Shadow(
-                                                      blurRadius: 2,
-                                                      offset: Offset(-1, -1),
-                                                    )
-                                                  ],
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : true;
-
-                            if (delete != null && delete) {
-                              BlocProvider.of<AzkarBloc>(context).add(Delete());
-                              if (model.category == CategoryNames.Favorite)
-                                controller.previous();
-                            }
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: IconButton(
-                            icon: Icon(Icons.info, color: Colors.white),
-                            onPressed: () {
-                              showCustomDialog(
-                                child: Text(
-                                  state.currentZekr.about,
-                                  textAlign: TextAlign.center,
-                                  textDirection: TextDirection.rtl,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              );
-                            }),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
-            decoration: BoxDecoration(
-                color: index % 2 == 0
-                    ? Colors.indigo
-                    : index % 3 == 0 ? Colors.cyan : Colors.purple),
-          );
-        }),
-      ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Expanded(
+                  child: IconButton(
+                    icon: Icon(Icons.share, color: Colors.white),
+                    onPressed: () {
+                      Share.share(
+                          "${state.currentZekr.name} \n\n\n ${state.currentZekr.about} \n\n ${AppInfo.downloadLink}");
+                    },
+                  ),
+                ),
+                BlocProvider.of<AzkarBloc>(context)
+                            .state
+                            .currentZekr
+                            .category ==
+                        CategoryNames.Favorite
+                    ? Expanded(
+                        child: IconButton(
+                          icon: Icon(Icons.edit, color: Colors.white),
+                          onPressed: () {
+                            BlocProvider.of<AzkarBloc>(context).add(
+                              AddOrUpdate(zekr: model, context: context),
+                            );
+                          },
+                        ),
+                      )
+                    : Container(),
+                Expanded(
+                  child: IconButton(
+                    icon: Icon(
+                        model.category == CategoryNames.Favorite
+                            ? Icons.delete
+                            : model.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                        color: Colors.red),
+                    onPressed: () async {
+                      bool delete = (model.isFavorite)
+                          ? await showCustomDialog(
+                              child: Column(
+                                children: <Widget>[
+                                  Text(
+                                    "هل تريد الحذف من المفضلة؟",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                    textDirection: TextDirection.rtl,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 30),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      FloatingActionButton(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        onPressed: () =>
+                                            Router.navigator.pop(false),
+                                        child: Text(
+                                          "لا",
+                                          style: TextStyle(
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 2,
+                                                offset: Offset(-1, -1),
+                                              )
+                                            ],
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      FloatingActionButton(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        onPressed: () =>
+                                            Router.navigator.pop(true),
+                                        child: Text(
+                                          "نعم",
+                                          style: TextStyle(
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 2,
+                                                offset: Offset(-1, -1),
+                                              )
+                                            ],
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            )
+                          : true;
+
+                      if (delete != null && delete) {
+                        BlocProvider.of<AzkarBloc>(context).add(Delete());
+                        if (model.category == CategoryNames.Favorite)
+                          controller.previous();
+                      }
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: IconButton(
+                      icon: Icon(Icons.info, color: Colors.white),
+                      onPressed: () {
+                        showCustomDialog(
+                          child: Text(
+                            state.currentZekr.about,
+                            textAlign: TextAlign.center,
+                            textDirection: TextDirection.rtl,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        );
+                      }),
+                ),
+              ],
+            ),
+          ],
+        );
+      }),
     );
   }
 

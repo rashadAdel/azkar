@@ -21,7 +21,7 @@ class ChangePosition extends AzkarEvent {
 
 class AddOrUpdate extends AzkarEvent {
   final BuildContext context;
-  final ZekrModel zekr;
+  final Zekr zekr;
 
   const AddOrUpdate({@required this.context, this.zekr});
 

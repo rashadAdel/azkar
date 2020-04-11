@@ -14,6 +14,9 @@ class AnimationBloc extends Bloc<AnimationEvent, AnimationState> {
     AnimationEvent event,
   ) async* {
     if (event is Clicked) {
+      if (event.categoryName == null)
+        // delay for animation transition to finish and return category animation
+        await Future.delayed(Duration(milliseconds: 300));
       yield AnimationState(categoryName: event.categoryName);
     } else if (event is SecondAnimation) {
       yield AnimationState(

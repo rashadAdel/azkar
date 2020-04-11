@@ -1,3 +1,4 @@
+import 'package:azkar/Database/abstract.dart';
 import 'package:azkar/bloc/animation/animation_bloc.dart';
 import 'package:azkar/bloc/azkar/azkar_bloc.dart';
 import 'package:azkar/bloc/thems/ThemeBloc.dart';
@@ -131,9 +132,12 @@ class _CategoryState extends State<Category> {
           ),
         )
         .toList();
-    Future.delayed(Duration(seconds: 1), () {
-      AppInfo.checkUpdate();
-    });
+    Future.delayed(
+      Duration(seconds: 1),
+      () {
+        AppInfo.checkUpdate();
+      },
+    );
     return WillPopScope(
       onWillPop: _onWillPop,
       child: SafeArea(
@@ -145,7 +149,16 @@ class _CategoryState extends State<Category> {
     );
   }
 
+//Todo:delete
+  Future<void> test() async {
+    (await Repos.zekr.query(where: "`Category`='${CategoryNames.Favorite}'"))
+        .forEach((u) {
+      print(u.toMap);
+    });
+  }
+
   Future<bool> _onWillPop() async {
+    test();
     return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
