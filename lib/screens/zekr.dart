@@ -3,7 +3,7 @@ import 'package:audioplayers/audio_cache.dart';
 import 'package:azkar/Database/abstract.dart';
 import '../bloc/animation/animation_bloc.dart';
 import '../bloc/azkar/azkar_bloc.dart';
-import '../model/info.dart';
+import '../models/info.dart';
 import 'category.dart';
 import 'settings.dart';
 import 'package:flutter/material.dart';

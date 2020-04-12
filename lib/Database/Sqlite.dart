@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'abstract.dart';
-import 'models/zekr.dart';
+import '../models/zekr.dart';
 import '../screens/category.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';

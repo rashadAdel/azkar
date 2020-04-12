@@ -1,5 +1,5 @@
 import 'package:azkar/Routes/Router.gr.dart';
-import 'package:azkar/model/info.dart';
+import '../models/info.dart';
 import 'package:azkar/screens/zekr.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';

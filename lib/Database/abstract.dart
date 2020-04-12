@@ -1,6 +1,7 @@
-import 'models/zekr.dart';
+import 'package:azkar/models/zekr.dart';
+
 import 'Sqlite.dart';
-export 'models/zekr.dart';
+export '../models/zekr.dart';
 
 abstract class Model {
   const Model();

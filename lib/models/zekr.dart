@@ -1,4 +1,4 @@
-import '../abstract.dart';
+import '../Database/abstract.dart';
 
 class Zekr extends Model {
   final String name, about, category;
