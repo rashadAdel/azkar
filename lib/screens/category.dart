@@ -149,16 +149,7 @@ class _CategoryState extends State<Category> {
     );
   }
 
-//Todo:delete
-  Future<void> test() async {
-    (await Repos.zekr.query(where: "`Category`='${CategoryNames.Favorite}'"))
-        .forEach((u) {
-      print(u.toMap);
-    });
-  }
-
   Future<bool> _onWillPop() async {
-    test();
     return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
