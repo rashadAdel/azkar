@@ -9,4 +9,4 @@
 - fixed animation
 - make code clean
 - fixed after search
-- fixed agter delete
+- fixed after delete
